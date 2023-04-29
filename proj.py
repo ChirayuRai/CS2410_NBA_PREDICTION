@@ -10,6 +10,7 @@ import warnings
 warnings.warn = warn
 
 
+import datetime
 from time import sleep as sleep
 
 import numpy as np
@@ -23,6 +24,8 @@ from sportsipy.nba.teams import Teams
 
 # change this global var for where the csv is saved/read from
 PATH_TO_CSV = './nba.csv'
+CURRENT_YEAR = int(datetime.date.today().year)
+LAST_YEAR = CURRENT_YEAR - 1
 
 
 def main():
@@ -33,8 +36,8 @@ def main():
 
 
 def finish_model(df):
-    # Using the importances code down below, I printed out the least important features, and decided to drop them from the dataset to increase 
-    # the overall accuracy
+    # Using the importances code down below, I printed out the least important features, and decided to drop 
+    # the less useful ones from the dataset to increase the overall accuracy 
     train_drop = ['two_point_field_goals', 'opp_points', 'opp_steals', 'opp_field_goal_attempts', 'opp_two_point_field_goal_percentage', 'defensive_rebounds', 'turnovers', 'games_played', 'opp_three_point_field_goal_attempts', 'free_throws', 'steals', 'free_throw_percentage', 'personal_fouls', 'opp_personal_fouls', 'offensive_rebounds', 'minutes_played', 'opp_three_point_field_goal_percentage', 'two_point_field_goal_attempts', 'opp_assists', 'total_rebounds', 'free_throw_attempts', 'opp_defensive_rebounds']
     # Split data into features and target variable
     y = np.array(df.pop("Champion"))
@@ -47,11 +50,11 @@ def finish_model(df):
     X_test.drop(["name", "season"], axis=1, inplace=True)
 
     # Create the model while also balancing the dataset
-    balanced = BalancedRandomForestClassifier(random_state=20, n_estimators=200, warm_start=True)
+    balanced = BalancedRandomForestClassifier(random_state=20, n_estimators=200, warm_start=True, n_jobs=-1)
     balanced.fit(X_train, y_train)
 
     """ Where we start finding features to cut out """
-    importances = balanced.feature_importances_*100
+    importances = balanced.feature_importances_
     indices = np.argsort(importances)[::-1]
     names = [X_train.columns[i] for i in indices]
 
@@ -123,15 +126,15 @@ def clean_csv_data():
     df = df.reindex(sorted(df.columns), axis=1)
     return df
 
-def create_2023_df():
+def create_curr_year_df():
     teams_stat_list = []
-    for team in Teams(2023):
+    for team in Teams(CURRENT_YEAR):
         team_df = team.dataframe
-        team_df['season'] = 2023
+        team_df['season'] = CURRENT_YEAR 
         teams_stat_list.append(team_df)
 
     df = pd.concat(teams_stat_list).reset_index(drop=True)
-    df.to_csv("./2023.csv", index=False)
+    df.to_csv(f"./{CURRENT_YEAR}.csv", index=False)
 
 
     # don't need abv
@@ -146,8 +149,8 @@ def create_data_csv():
     This will pull a huge set of data and then save it as a csv file.
     """
     teams_stats_list = [] 
-    # Iterate through all teams from 1980 - 2023
-    for year in range(1980, 2023):
+    # Iterate through all teams from 1980 - 2022
+    for year in range(1980, CURRENT_YEAR):
         # Iterate through every team that season
         sleep(0.1)
         for team in Teams(year):
