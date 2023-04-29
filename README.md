@@ -1,14 +1,18 @@
 # CS2410 NBA PREDICTION
 A predictive model that lists the probability of each NBA team being the next NBA champion
 
-### TECHNOLOGIES USED
+* [Technologies Used](#tech)
+* [How does it work?](#howWork)
+* [How do I use it](#howUse)
+
+### TECHNOLOGIES USED {#tech}
 * Sportsipy
 * Beautiful Soup
 * Requests
 * Sklearn metrics (AUC-ROC, F1-Score, Accuracy score)
 * Imblearn BalancedRandomForestClassifier
 
-### HOW DOES IT WORK?
+### HOW DOES IT WORK? {#howWork}
 1. First, data about every team is pulled from [Basketball Reference](https://www.basketball-reference.com/) using sportsipy
     * This data includes overall team data of every year, such as their field goal percentage, blocks, etc.
     * Once every team's data is pulled through sportsipy, we use beautiful soup to scrape through the website again to add on the champion for every year, just because that data isn't available within sportsipy
@@ -25,15 +29,27 @@ A predictive model that lists the probability of each NBA team being the next NB
 4. Evaluate the model using SKLearn's metrics
 5. Create our list of predictions by passing the current year's data through the model
 
-### HOW DO I USE IT?
-1. Create a virtual enviornment using python's venv package
+### HOW DO I USE IT? {#howUse}
+1. Create a virtual enviornment using python's venv package and set it up
 	* Create a directory to use as a virtual enviornment. I'm calling mine "venv"
-	```mkdir venv```
+	```
+	mkdir venv
+	```
 	* Go into that directory and create a virtual enviornment inside of it
 	```python
 	cd venv  
 	python3 -m venv venv
-	python3 -m venv venv
 	```
+	* Go back out the virtual enviornment, activate it, and then install all the packages from the req.txt file
+	```python
+	cd ..
+	. venv/bin/activate
+	pip3 install -r req.txt
+	```
+	* Install the [sportsipy](https://github.com/davidjkrause/sportsipy/tree/pyquery2) package into your venv by following the instructions within its repo
+2. Run!
+	* Type ```python3 proj.py``` into your terminal or run it in your IDE and you should be good to go!
+		* If you don't already have data generated, make sure to run the ```create_curr_year_df()``` method and the ```create_data_csv()``` method
+	* The teams should be listed out in your terminal in order of most likely to least likely, and a CSV file called ```final.csv``` should also be created with some extra information
 
 
