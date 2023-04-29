@@ -1,18 +1,19 @@
 # CS2410 NBA PREDICTION
 A predictive model that lists the probability of each NBA team being the next NBA champion
 
-* [Technologies Used](#tech)
-* [How does it work?](#howWork)
-* [How do I use it](#howUse)
+### CONTENT
+* [Technologies Used](#technologies-used)
+* [How does it work](#how-does-it-work)
+* [How do I use it](#how-do-i-use-it)
 
-### TECHNOLOGIES USED {#tech}
+### TECHNOLOGIES USED 
 * Sportsipy
 * Beautiful Soup
 * Requests
 * Sklearn metrics (AUC-ROC, F1-Score, Accuracy score)
 * Imblearn BalancedRandomForestClassifier
 
-### HOW DOES IT WORK? {#howWork}
+### HOW DOES IT WORK 
 1. First, data about every team is pulled from [Basketball Reference](https://www.basketball-reference.com/) using sportsipy
     * This data includes overall team data of every year, such as their field goal percentage, blocks, etc.
     * Once every team's data is pulled through sportsipy, we use beautiful soup to scrape through the website again to add on the champion for every year, just because that data isn't available within sportsipy
@@ -29,7 +30,7 @@ A predictive model that lists the probability of each NBA team being the next NB
 4. Evaluate the model using SKLearn's metrics
 5. Create our list of predictions by passing the current year's data through the model
 
-### HOW DO I USE IT? {#howUse}
+### HOW DO I USE IT
 1. Create a virtual enviornment using python's venv package and set it up
 	* Create a directory to use as a virtual enviornment. I'm calling mine "venv"
 	```
