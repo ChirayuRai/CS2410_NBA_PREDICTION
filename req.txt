@@ -29,7 +29,6 @@ scipy==1.10.1
 six==1.15.0
 sklearn==0.0.post4
 soupsieve==2.4.1
-sportsipy @ file:///Users/chirayur/OneDrive%20-%20Cal%20Poly%20Pomona/College/All%20semesters/Spring%202023/CS%202410/Group%20Project/CS2410_NBA_PREDICTION/venv/lib/python3.8/site-packages/sportsipy/dist/sportsipy-0.6.0-py3-none-any.whl#sha256=2cb2182863521f3196acb63f901a7292965ca7d03fbf4de77e386f50ade97df6
 threadpoolctl==3.1.0
 tzdata==2023.3
 urllib3==1.26.5

@@ -26,22 +26,23 @@ from sportsipy.nba.teams import Teams
 PATH_TO_CSV = './nba.csv'
 CURRENT_YEAR = int(datetime.date.today().year)
 LAST_YEAR = CURRENT_YEAR - 1
+useless_features = ['two_point_field_goals', 'opp_points', 'opp_steals', 'opp_field_goal_attempts', 'opp_two_point_field_goal_percentage', 'defensive_rebounds', 'turnovers', 'games_played', 'opp_three_point_field_goal_attempts', 'free_throws', 'steals', 'free_throw_percentage', 'personal_fouls', 'opp_personal_fouls', 'offensive_rebounds', 'minutes_played', 'opp_three_point_field_goal_percentage', 'two_point_field_goal_attempts', 'opp_assists', 'total_rebounds', 'free_throw_attempts', 'opp_defensive_rebounds']
 
 
 def main():
     # Only uncomment this line if you do not already have data created
-    #create_data_csv()
-    cleaned_df = clean_csv_data()
-    finish_model(cleaned_df)
+    #create_historical_data_csv()
+    # create_curr_year_csv()
+    finish_model()
 
 
-def finish_model(df):
-    # Using the importances code down below, I printed out the least important features, and decided to drop 
-    # the less useful ones from the dataset to increase the overall accuracy 
-    train_drop = ['two_point_field_goals', 'opp_points', 'opp_steals', 'opp_field_goal_attempts', 'opp_two_point_field_goal_percentage', 'defensive_rebounds', 'turnovers', 'games_played', 'opp_three_point_field_goal_attempts', 'free_throws', 'steals', 'free_throw_percentage', 'personal_fouls', 'opp_personal_fouls', 'offensive_rebounds', 'minutes_played', 'opp_three_point_field_goal_percentage', 'two_point_field_goal_attempts', 'opp_assists', 'total_rebounds', 'free_throw_attempts', 'opp_defensive_rebounds']
+def finish_model():
+    df = pd.read_csv("./nba.csv")
+    df.drop(index=df.index[-1],axis=0,inplace=True)
+
     # Split data into features and target variable
     y = np.array(df.pop("Champion"))
-    X = df.drop(train_drop, axis=1)
+    X = df
     # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.25, random_state=40)
 
@@ -53,7 +54,9 @@ def finish_model(df):
     balanced = BalancedRandomForestClassifier(random_state=20, n_estimators=200, warm_start=True, n_jobs=-1)
     balanced.fit(X_train, y_train)
 
-    """ Where we start finding features to cut out """
+    # Using the importances code down below, I printed out the least important features, and decided to drop 
+    # the less useful ones from the dataset to increase the overall accuracy 
+    # can see it being dropped in the creation of each csv
     importances = balanced.feature_importances_
     indices = np.argsort(importances)[::-1]
     names = [X_train.columns[i] for i in indices]
@@ -82,18 +85,15 @@ def finish_model(df):
 
     # Assuming you have collected the data for the current year's teams
     # If data is not already created, invoke create_2023_df()
-    current_year_data = pd.read_csv("./2023.csv")
+    current_year_data = pd.read_csv(f"./{CURRENT_YEAR}_data.csv")
 
     # popping to add later
     curr_name = current_year_data.pop("name")
-    # removing useless data
-    current_year_data.drop(["abbreviation", "season"], axis=1, inplace=True)
-    current_year_data.drop(train_drop, axis=1, inplace=True)
 
     probabilities = balanced.predict_proba(current_year_data)[:, 1]
 
     # adding names back to probabilities
-    final_model = pd.concat([pd.DataFrame(probabilities), curr_name], axis=1)
+    final_model = pd.concat([pd.DataFrame(probabilities), curr_name, current_year_data], axis=1)
     final_model=final_model.rename(columns={0:'probabilities'})
 
     final_model.sort_values(by='probabilities', ascending=False, inplace=True)
@@ -104,46 +104,23 @@ def finish_model(df):
     print(final_model["name"])
 
 
-def clean_csv_data():
-    # pull in data form csv (change this according to wherever you saved your data)
-    df = pd.read_csv(PATH_TO_CSV)
-
-    # Clean out the year and name column (year is duplicate and we have abv, so no need for name)
-    df.drop(['Year', "abbreviation"], axis=1, inplace=True)
-
-    # If champion --> Yes, if not champion --> No
-    df['Champion'] = df["Champion"].replace('.*', 1, regex=True)
-    df['Champion'] = df["Champion"].fillna(0)
-    
-
-    # Scaling all data to account for games played, because it's not necessary that every season has 82 games played
-    cols = df.columns.to_list()
-    columns_to_not_scale = ['season', 'Champion', 'games_played', 'rank', 'name'] + [col for col in cols if 'percentage' in col]
-    columns_to_scale = [col for col in cols if col not in columns_to_not_scale]
-    scaled_df = df[columns_to_scale].div(df['games_played'], axis=0)
-    df = pd.concat([df[columns_to_not_scale], scaled_df], axis=1)
-
-    df = df.reindex(sorted(df.columns), axis=1)
-    return df
-
-def create_curr_year_df():
+def create_curr_year_csv():
     teams_stat_list = []
     for team in Teams(CURRENT_YEAR):
         team_df = team.dataframe
-        team_df['season'] = CURRENT_YEAR 
         teams_stat_list.append(team_df)
 
+    # fixing up data and saving to disk
     df = pd.concat(teams_stat_list).reset_index(drop=True)
-    df.to_csv(f"./{CURRENT_YEAR}.csv", index=False)
+    df.drop(useless_features, axis=1, inplace=True)
+    df.drop(["abbreviation"], axis=1, inplace=True)
+    df.to_csv(f"./{CURRENT_YEAR}_data.csv", index=False)
 
-
-    # don't need abv
-    df = df.drop('abbreviation', axis=1)
     df = df.reindex(sorted(df.columns), axis=1)
     return df
 
 
-def create_data_csv():
+def create_historical_data_csv():
     """
     We are pulling data from 1980 and on, because that's when the three point line was first implemented
     This will pull a huge set of data and then save it as a csv file.
@@ -152,9 +129,8 @@ def create_data_csv():
     # Iterate through all teams from 1980 - 2022
     for year in range(1980, CURRENT_YEAR):
         # Iterate through every team that season
-        sleep(0.1)
         for team in Teams(year):
-            sleep(0.2)
+            sleep(0.15)
             team_df = team.dataframe
             team_df["season"] = year
             teams_stats_list.append(team_df)
@@ -178,8 +154,23 @@ def create_data_csv():
     # Merge the champion and team stats
     final_df = pd.merge(teams_df, champ_df, left_on=['name', 'season'], right_on=['Champion', 'Year'], how='outer')
 
-    # cleaning up abbreviation keys
-    final_df = final_df[final_df['abbreviation'].notna()]
+    # If champion --> Yes, if not champion --> No
+    final_df['Champion'] = final_df["Champion"].replace('.*', 1, regex=True)
+    final_df['Champion'] = final_df["Champion"].fillna(0)
+    
+
+    
+    final_df.drop(["Year", "abbreviation"], axis=1, inplace=True)
+    # Scaling all data to account for games played, because it's not necessary that every season has 82 games played
+    cols = final_df.columns.to_list()
+    columns_to_not_scale = ['season', 'Champion', 'games_played', 'rank', 'name'] + [col for col in cols if 'percentage' in col]
+    columns_to_scale = [col for col in cols if col not in columns_to_not_scale]
+    scaled_df = final_df[columns_to_scale].div(final_df['games_played'], axis=0)
+    final_df = pd.concat([final_df[columns_to_not_scale], scaled_df], axis=1)
+    final_df = final_df.reindex(sorted(final_df.columns), axis=1)
+
+    # Cleaning out useless features for increased accuracy
+    final_df.drop(useless_features, axis=1, inplace=True)
     
     final_df.to_csv(PATH_TO_CSV, index=False)
 
